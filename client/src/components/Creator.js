@@ -14,7 +14,9 @@ class Creator extends Component {
       aUSDCBalance: "0",
       sentTransactionHash: "",
       cashoutModalState: CashoutModalState.HIDDEN,
+      ethTransactions: [],
     };
+    this.cashOut = this.cashOut.bind(this);
   }
 
   getLink(hash) {
@@ -22,16 +24,22 @@ class Creator extends Component {
   }
 
   cashOut() {
-    if (this.state.aUSDCBalance == "0") {
+    if (this.state.aUSDCBalance === "0") {
       alert("You don't have any funds to cash out");
     } else {
-      const httpProvider = this.props.provider;
-      const txBuilder = new TxBuilderV2(Network.main, httpProvider);
+      const httpProvider = new Web3.providers.HttpProvider(
+        process.env.ETHEREUM_URL ||
+          "https://kovan.infura.io/v3/74542cc97cfd4b59b1c971c683ba5042"
+      );
+      const txBuilder = new TxBuilderV2(Network.kovan, httpProvider);
       const tokenAddress = "0xe22da380ee6B445bb8273C81944ADEB6E8450422";
-      const user = this.props.connectedWallet;
+      const user = "0x943E4CBb4f1962a077524Fe5999299c875f6C0aa";
       const amount = this.props.aUSDCBalance;
 
-      const lendingPool = txBuilder.getLendingPool(Market.main); // get all lending pool methods
+      console.log(txBuilder);
+
+      const lendingPool = txBuilder.getLendingPool(Market); // get all lending pool methods
+      console.log(lendingPool);
       try {
         lendingPool.withdraw({
           user, // string,
@@ -106,6 +114,9 @@ class Creator extends Component {
       .then((priceUSD) => {
         this.setState({ ETHinUSD: priceUSD[0].current_price });
       });
+    if (this.props.ethTransactions) {
+      this.setState({ ethTransactions: this.props.ethTransactions });
+    }
   }
 
   getValue(weiVal) {
@@ -207,7 +218,7 @@ class Creator extends Component {
                 </tr>
               </thead>
               <tbody>
-                {this.props.ethTransactions.map((tx) => (
+                {this.state.ethTransactions.map((tx) => (
                   <tr>
                     <td>
                       <a
