@@ -23,6 +23,7 @@ class Creator extends Component {
     };
     this.cashOut = this.cashOut.bind(this);
     this.calculateInterest = this.calculateInterest.bind(this);
+    this.changeEstValue = this.changeEstValue.bind(this);
   }
 
   getLink(hash) {
@@ -189,9 +190,14 @@ class Creator extends Component {
   }
 
   changeEstValue(e) {
-    var futureRate = this.calculateInterest(e); 
-    futureRate = futureRate.toFixed(2); 
-    this.setState({estimatedFuture: futureRate});
+    const principle = parseFloat(this.state.aUSDCBalance); 
+    const rate = parseFloat(this.state.aaveRate); 
+    const timeYears = parseInt(e.target.value)/12;
+
+    const A = principle * (1 + rate * timeYears); 
+    console.log(A, e, principle, rate, timeYears); 
+
+    this.setState({estimatedFuture: A.toFixed(2)});
   }
 
   render() {
@@ -235,7 +241,7 @@ class Creator extends Component {
                   <Col sm>
                     <CopyToClipboard text={fanLink}
                         onCopy={() => this.setState({copied: true})}>
-                      <Button variant="outline-secondary">
+                      <Button variant="outline-primary">
                         <ImCopy />
                       </Button>
                     </CopyToClipboard>
