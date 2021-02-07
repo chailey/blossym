@@ -83,31 +83,34 @@ class App extends Component {
           onWalletConnectClick={() => this.openWalletConnectModal()}
           onDisconnectWallet={() => this.disconnectWallet()}
         />
-        <Switch>
-          <Route exact path="/" component={Home} />
-          <Route
-            path={["/fan/:creatorAddress", "/fan"]}
-            render={(routeProps) => (
-              <Fan
-                {...routeProps}
-                provider={this.state.provider}
-                connectedWallet={this.state.connectedWallet}
-                onWalletConnectClick={this.openWalletConnectModal}
-              />
-            )}
-          />
-          <Route
-            path="/creator"
-            render={(routeProps) => (
-              <Creator
-                {...routeProps}
-                connectedWallet={this.state.connectedWallet}
-                ethTransactions={this.state.ethTransactions}
-                onWalletConnectClick={this.openWalletConnectModal}
-              />
-            )}
-          />
-        </Switch>
+        <Container>
+          <Switch>
+            <Route exact path="/" component={Home} />
+            <Route
+              path="/fan"
+              render={(routeProps) => (
+                <Fan
+                  {...routeProps}
+                  provider={this.state.provider}
+                  connectedWallet={this.state.connectedWallet}
+                  onWalletConnectClick={this.openWalletConnectModal}
+                />
+              )}
+            />
+            <Route
+              path="/creator"
+              render={(routeProps) => (
+                <Creator
+                  {...routeProps}
+                  provider={this.state.provider}
+                  connectedWallet={this.state.connectedWallet}
+                  ethTransactions={this.state.ethTransactions}
+                  onWalletConnectClick={this.openWalletConnectModal}
+                />
+              )}
+            />
+          </Switch>
+        </Container>
       </BrowserRouter>
     );
   }

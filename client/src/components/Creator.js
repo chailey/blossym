@@ -1,7 +1,9 @@
+import { TxBuilderV2, Network, Market } from "@aave/protocol-js";
 import React, { Component } from "react";
 import { Button, Card, Col, Container, Row, Table } from "react-bootstrap";
 import { ImCopy, ImTwitter, ImTelegram } from "react-icons/im";
 import { TwitterShareButton, TelegramShareButton } from "react-share";
+import CashoutModal, { CashoutModalState } from "./CashoutModal";
 import Web3 from "web3";
 
 class Creator extends Component {
@@ -10,11 +12,36 @@ class Creator extends Component {
     this.state = {
       ETHinUSD: "0",
       aUSDCBalance: "0",
+      sentTransactionHash: "",
+      cashoutModalState: CashoutModalState.HIDDEN,
     };
   }
 
   getLink(hash) {
     return "https://kovan.etherscan.io/tx/" + hash;
+  }
+
+  cashOut() {
+    if (this.state.aUSDCBalance == "0") {
+      alert("You don't have any funds to cash out");
+    } else {
+      const httpProvider = this.props.provider;
+      const txBuilder = new TxBuilderV2(Network.main, httpProvider);
+      const tokenAddress = "0xe22da380ee6B445bb8273C81944ADEB6E8450422";
+      const user = this.props.connectedWallet;
+      const amount = this.props.aUSDCBalance;
+
+      const lendingPool = txBuilder.getLendingPool(Market.main); // get all lending pool methods
+      try {
+        lendingPool.withdraw({
+          user, // string,
+          tokenAddress, // string,
+          amount,
+        });
+      } catch (error) {
+        console.log(`Error: ${error}`);
+      }
+    }
   }
 
   async getBalance() {
@@ -115,8 +142,8 @@ class Creator extends Component {
     } else {
       page = (
         <Container>
-          <div className="d-flex justify-content-center mt-5 col-md-12">
-            <Button variant="success" size="lg">
+          <div class="d-flex justify-content-center mt-5 col-md-12">
+            <Button variant="success" size="lg" onClick={this.cashOut()}>
               Cash Out
             </Button>
           </div>
