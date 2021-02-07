@@ -1,10 +1,18 @@
 import React, { Component } from "react";
-import { Row, Col, ButtonGroup, Button, Card, Container, Table } from "react-bootstrap";
+import {
+  Row,
+  Col,
+  ButtonGroup,
+  Button,
+  Card,
+  Container,
+  Table,
+} from "react-bootstrap";
 import { ImCopy, ImTwitter, ImTelegram } from "react-icons/im";
 import CreatorCashout from "../contracts/CreatorCashout.json";
 import { TwitterShareButton, TelegramShareButton } from "react-share";
 import CashoutModal, { CashoutModalState } from "./CashoutModal";
-import {CopyToClipboard} from 'react-copy-to-clipboard';
+import { CopyToClipboard } from "react-copy-to-clipboard";
 import { addresses } from "../addresses";
 import Web3 from "web3";
 
@@ -16,9 +24,9 @@ class Creator extends Component {
       aUSDCBalance: "0",
       sentTransactionHash: "",
       cashoutModalState: CashoutModalState.HIDDEN,
-      aaveRate: "0", 
-      estimatedFuture: "0", 
-      copied: false, 
+      aaveRate: "0",
+      estimatedFuture: "0",
+      copied: false,
       ethTransactions: [],
     };
     this.cashOut = this.cashOut.bind(this);
@@ -60,7 +68,10 @@ class Creator extends Component {
     } else {
       try {
         this.state.contract.methods
-          .cashout(parseFloat(this.state.aUSDCBalance), this.props.connectedWallet)
+          .cashout(
+            parseFloat(this.state.aUSDCBalance),
+            this.props.connectedWallet
+          )
           .send({ from: this.props.connectedWallet })
           .once("transactionHash", (hash) => {
             this.setState({
@@ -85,13 +96,12 @@ class Creator extends Component {
   }
 
   calculateInterest(time) {
-    const principle = parseFloat(this.state.aUSDCBalance); 
-    const rate = parseFloat(this.state.aaveRate); 
-    const timeYears = parseInt(time)/12;
+    const principle = parseFloat(this.state.aUSDCBalance);
+    const rate = parseFloat(this.state.aaveRate);
+    const timeYears = parseInt(time) / 12;
 
-    const A = principle * (1 + rate * timeYears); 
-    return A
-
+    const A = principle * (1 + rate * timeYears);
+    return A;
   }
 
   async getBalance() {
@@ -110,21 +120,21 @@ class Creator extends Component {
       .then((response) => response.json())
       .then((balance) => {
         // This gives the correct number of decimal places for the exact dollar value
-        console.log(balance); 
+        console.log(balance);
         balance = (balance.result * Math.pow(10, -6)).toFixed(2);
         this.setState({ aUSDCBalance: balance });
       });
 
-    const fetchURLAaveRates = "https://api.aleth.io/v0/defi/snapshot"; 
+    const fetchURLAaveRates = "https://api.aleth.io/v0/defi/snapshot";
     fetch(fetchURLAaveRates)
-        .then((response) => response.json())
-        .then((aaveRate) => { 
-          console.log(aaveRate); 
-          aaveRate = aaveRate.data[95].value; 
-          this.setState({aaveRate: aaveRate});
-        });
-    const futureRate = this.calculateInterest(1); 
-    this.setState({estimatedFuture:  futureRate.toFixed(2)});
+      .then((response) => response.json())
+      .then((aaveRate) => {
+        console.log(aaveRate);
+        aaveRate = aaveRate.data[95].value;
+        this.setState({ aaveRate: aaveRate });
+      });
+    const futureRate = this.calculateInterest(1);
+    this.setState({ estimatedFuture: futureRate.toFixed(2) });
     /*
     if (this.props.provider) {
       const web3 = new Web3(this.props.provider);
@@ -190,19 +200,19 @@ class Creator extends Component {
   }
 
   changeEstValue(e) {
-    const principle = parseFloat(this.state.aUSDCBalance); 
-    const rate = parseFloat(this.state.aaveRate); 
-    const timeYears = parseInt(e.target.value)/12;
+    const principle = parseFloat(this.state.aUSDCBalance);
+    const rate = parseFloat(this.state.aaveRate);
+    const timeYears = parseInt(e.target.value) / 12;
 
-    const A = principle * (1 + rate * timeYears); 
-    console.log(A, e, principle, rate, timeYears); 
+    const A = principle * (1 + rate * timeYears);
+    console.log(A, e, principle, rate, timeYears);
 
-    this.setState({estimatedFuture: A.toFixed(2)});
+    this.setState({ estimatedFuture: A.toFixed(2) });
   }
 
   render() {
     const balance = this.state.aUSDCBalance + " aUSDC";
-    const rate = this.state.aaveRate + "%"; 
+    const rate = this.state.aaveRate + "%";
     const fanLink =
       "https://blossym.org/fan?creatorAddress=" + this.props.connectedWallet;
 
@@ -222,7 +232,9 @@ class Creator extends Component {
       page = (
         <Container>
           <div class="d-flex justify-content-center mt-5 col-md-12">
-            <Button onClick={this.cashOut} variant="success" size="lg">Cash Out</Button>
+            <Button onClick={this.cashOut} variant="success" size="lg">
+              Cash Out
+            </Button>
           </div>
 
           <div className="d-flex justify-content-sm-center mt-5">
@@ -239,8 +251,10 @@ class Creator extends Component {
                 <Card.Title>Share your fan link!</Card.Title>
                 <Row>
                   <Col sm>
-                    <CopyToClipboard text={fanLink}
-                        onCopy={() => this.setState({copied: true})}>
+                    <CopyToClipboard
+                      text={fanLink}
+                      onCopy={() => this.setState({ copied: true })}
+                    >
                       <Button variant="outline-primary">
                         <ImCopy />
                       </Button>

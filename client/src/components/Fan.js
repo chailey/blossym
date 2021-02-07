@@ -6,7 +6,6 @@ import TransactionModal, { TransactionModalState } from "./TransactionModal";
 import { addresses } from "../addresses";
 import "./Fan.css";
 
- 
 class Fan extends Component {
   constructor(props) {
     super(props);
