@@ -7,8 +7,9 @@ const LendingPoolAddressesProvider =
 
 module.exports = function (deployer) {
   deployer.deploy(CreatorCashout, LendingPoolAddressesProvider);
-  //deployer.deploy(FanSwap).then(() => {
-  //  return deployer.deploy(FanProxy, FanSwap.address, FanDonation.address);
-  //});
+  deployer.deploy(FanDonation, LendingPoolAddressesProvider);
+  deployer.deploy(FanSwap).then(() => {
+    return deployer.deploy(FanProxy, FanSwap.address, FanDonation.address);
+  });
   deployer.deploy()
 };
