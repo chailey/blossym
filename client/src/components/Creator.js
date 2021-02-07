@@ -2,6 +2,7 @@ import { TxBuilderV2, Network, Market } from "@aave/protocol-js";
 import React, { Component } from "react";
 import { Button, Card, Col, Container, Row, Table } from "react-bootstrap";
 import { ImCopy, ImTwitter, ImTelegram } from "react-icons/im";
+import CreatorCashout from "../contracts/CreatorCashout.json";
 import { TwitterShareButton, TelegramShareButton } from "react-share";
 import CashoutModal, { CashoutModalState } from "./CashoutModal";
 import Web3 from "web3";
@@ -23,6 +24,30 @@ class Creator extends Component {
     return "https://kovan.etherscan.io/tx/" + hash;
   }
 
+  async initContract() {
+    const { provider } = this.props;
+    if (!provider || this.state.contract) {
+      return;
+    }
+
+    try {
+      const web3 = new Web3(provider);
+      const networkId = await web3.eth.net.getId();
+      const creatorAddress = addresses[networkId]
+        ? addresses[networkId].fanProxy
+        : CreatorCashout.networks[networkId].address;
+      const instance = new web3.eth.Contract(
+        CreatorCashout.abi,
+        creatorAddress
+      );
+
+      this.setState({ contract: instance });
+    } catch (error) {
+      // Catch any errors for any of the above operations.
+      console.error(error);
+    }
+  }
+
   cashOut() {
     if (this.state.aUSDCBalance === "0") {
       alert("You don't have any funds to cash out");
@@ -33,19 +58,28 @@ class Creator extends Component {
       );
       const txBuilder = new TxBuilderV2(Network.kovan, httpProvider);
       const tokenAddress = "0xe22da380ee6B445bb8273C81944ADEB6E8450422";
-      const user = "0x943E4CBb4f1962a077524Fe5999299c875f6C0aa";
       const amount = this.props.aUSDCBalance;
 
-      console.log(txBuilder);
-
-      const lendingPool = txBuilder.getLendingPool(Market); // get all lending pool methods
-      console.log(lendingPool);
       try {
-        lendingPool.withdraw({
-          user, // string,
-          tokenAddress, // string,
-          amount,
-        });
+        this.state.contract.methods
+          .withdraw(this.state.aUSDCBalance, this.props.connectedWallet)
+          .send({ from: this.props.connectedWallet })
+          .once("transactionHash", (hash) => {
+            this.setState({
+              sentTransactionHash: hash,
+              cashoutModalState: CashoutModalState.AWAITING_CONFIRMATION,
+            });
+          })
+          .once("receipt", () => {
+            this.setState({
+              cashoutModalState: CashoutModalState.CONFIRMED,
+            });
+          })
+          .on("error", () => {
+            this.setState({
+              cashoutModalState: CashoutModalState.ERROR,
+            });
+          });
       } catch (error) {
         console.log(`Error: ${error}`);
       }
@@ -105,7 +139,7 @@ class Creator extends Component {
     */
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.getBalance();
     fetch(
       "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum"
@@ -117,6 +151,7 @@ class Creator extends Component {
     if (this.props.ethTransactions) {
       this.setState({ ethTransactions: this.props.ethTransactions });
     }
+    await this.initContract();
   }
 
   getValue(weiVal) {
