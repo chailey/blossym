@@ -1,10 +1,11 @@
-import { TxBuilderV2, Network, Market } from "@aave/protocol-js";
 import React, { Component } from "react";
-import { Button, Card, Col, Container, Row, Table } from "react-bootstrap";
+import { Row, Col, ButtonGroup, Button, Card, Table } from "react-bootstrap";
 import { ImCopy, ImTwitter, ImTelegram } from "react-icons/im";
 import CreatorCashout from "../contracts/CreatorCashout.json";
 import { TwitterShareButton, TelegramShareButton } from "react-share";
 import CashoutModal, { CashoutModalState } from "./CashoutModal";
+import {CopyToClipboard} from 'react-copy-to-clipboard';
+import { addresses } from "../addresses";
 import Web3 from "web3";
 
 class Creator extends Component {
@@ -15,9 +16,13 @@ class Creator extends Component {
       aUSDCBalance: "0",
       sentTransactionHash: "",
       cashoutModalState: CashoutModalState.HIDDEN,
+      aaveRate: "0", 
+      estimatedFuture: "0", 
+      copied: false, 
       ethTransactions: [],
     };
     this.cashOut = this.cashOut.bind(this);
+    this.calculateInterest = this.calculateInterest.bind(this);
   }
 
   getLink(hash) {
@@ -52,17 +57,9 @@ class Creator extends Component {
     if (this.state.aUSDCBalance === "0") {
       alert("You don't have any funds to cash out");
     } else {
-      const httpProvider = new Web3.providers.HttpProvider(
-        process.env.ETHEREUM_URL ||
-          "https://kovan.infura.io/v3/74542cc97cfd4b59b1c971c683ba5042"
-      );
-      const txBuilder = new TxBuilderV2(Network.kovan, httpProvider);
-      const tokenAddress = "0xe22da380ee6B445bb8273C81944ADEB6E8450422";
-      const amount = this.props.aUSDCBalance;
-
       try {
         this.state.contract.methods
-          .withdraw(this.state.aUSDCBalance, this.props.connectedWallet)
+          .cashout(parseFloat(this.state.aUSDCBalance), this.props.connectedWallet)
           .send({ from: this.props.connectedWallet })
           .once("transactionHash", (hash) => {
             this.setState({
@@ -86,10 +83,20 @@ class Creator extends Component {
     }
   }
 
+  calculateInterest(time) {
+    const principle = parseFloat(this.state.aUSDCBalance); 
+    const rate = parseFloat(this.state.aaveRate); 
+    const timeYears = parseInt(time)/12;
+
+    const A = principle * (1 + rate * timeYears); 
+    return A
+
+  }
+
   async getBalance() {
     const tokenAddress = "0xe12afec5aa12cf614678f9bfeeb98ca9bb95b5b0";
     const walletAddress = this.props.connectedWallet;
-    const fetchURL =
+    const fetchURLEtherscan =
       "https://api-kovan.etherscan.io/api?module=account&action=tokenbalance" +
       "&contractaddress=" +
       tokenAddress +
@@ -98,13 +105,25 @@ class Creator extends Component {
       "&tag=latest&apikey=" +
       process.env.ETHERSCAN_KEY;
 
-    fetch(fetchURL)
+    fetch(fetchURLEtherscan)
       .then((response) => response.json())
       .then((balance) => {
         // This gives the correct number of decimal places for the exact dollar value
+        console.log(balance); 
         balance = (balance.result * Math.pow(10, -6)).toFixed(2);
         this.setState({ aUSDCBalance: balance });
       });
+
+    const fetchURLAaveRates = "https://api.aleth.io/v0/defi/snapshot"; 
+    fetch(fetchURLAaveRates)
+        .then((response) => response.json())
+        .then((aaveRate) => { 
+          console.log(aaveRate); 
+          aaveRate = aaveRate.data[95].value; 
+          this.setState({aaveRate: aaveRate});
+        });
+    const futureRate = this.calculateInterest(1); 
+    this.setState({estimatedFuture:  futureRate.toFixed(2)});
     /*
     if (this.props.provider) {
       const web3 = new Web3(this.props.provider);
@@ -169,9 +188,17 @@ class Creator extends Component {
     return d.toLocaleString();
   }
 
+  changeEstValue(e) {
+    var futureRate = this.calculateInterest(e); 
+    futureRate = futureRate.toFixed(2); 
+    this.setState({estimatedFuture: futureRate});
+  }
+
   render() {
     const balance = this.state.aUSDCBalance + " aUSDC";
-    const fanLink = "https://blossym.org/fan/" + this.props.connectedWallet;
+    const rate = this.state.aaveRate + "%"; 
+    const fanLink =
+      "https://blossym.org/fan?creatorAddress=" + this.props.connectedWallet;
 
     let page;
     if (!this.props.connectedWallet) {
@@ -189,9 +216,7 @@ class Creator extends Component {
       page = (
         <Container>
           <div class="d-flex justify-content-center mt-5 col-md-12">
-            <Button variant="success" size="lg" onClick={this.cashOut()}>
-              Cash Out
-            </Button>
+            <Button onClick={this.cashOut} variant="success" size="lg">Cash Out</Button>
           </div>
 
           <div className="d-flex justify-content-sm-center mt-5">
@@ -208,9 +233,12 @@ class Creator extends Component {
                 <Card.Title>Share your fan link!</Card.Title>
                 <Row>
                   <Col sm>
-                    <Button variant="outline-secondary">
-                      <ImCopy />
-                    </Button>
+                    <CopyToClipboard text={fanLink}
+                        onCopy={() => this.setState({copied: true})}>
+                      <Button variant="outline-secondary">
+                        <ImCopy />
+                      </Button>
+                    </CopyToClipboard>
                   </Col>
                   <Col sm>
                     <TwitterShareButton
@@ -240,7 +268,26 @@ class Creator extends Component {
               </Card.Body>
             </Card>
           </div>
-          <div className="d-flex justify-content-around mt-5 col-md-12">
+          <div class="d-flex justify-content-around mt-5 col-md-12">
+            <Card style={{ width: "17rem" }}>
+              <Card.Body>
+                <Card.Title>Interest Rate</Card.Title>
+                <Card.Text>{rate}</Card.Text>
+              </Card.Body>
+            </Card>
+            <Card style={{ width: "17rem" }}>
+              <Card.Body>
+                <Card.Title>Est. future earnings</Card.Title>
+                <Card.Text>{this.state.estimatedFuture}</Card.Text>
+                <ButtonGroup size="sm" onClick={this.changeEstValue}>
+                  <Button value="1">1mo</Button>
+                  <Button value="6">6mo</Button>
+                  <Button value="12">1yr</Button>
+                </ButtonGroup>
+              </Card.Body>
+            </Card>
+          </div>
+          <div class="d-flex justify-content-around mt-5 col-md-12">
             <h3> Recent Transactions </h3>
           </div>
           <div className="d-flex justify-content-around mt-5 col-md-12">
