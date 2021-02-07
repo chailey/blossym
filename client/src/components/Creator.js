@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Row, Col, ButtonGroup, Button, Card, Table } from "react-bootstrap";
+import { Row, Col, ButtonGroup, Button, Card, Container, Table } from "react-bootstrap";
 import { ImCopy, ImTwitter, ImTelegram } from "react-icons/im";
 import CreatorCashout from "../contracts/CreatorCashout.json";
 import { TwitterShareButton, TelegramShareButton } from "react-share";
@@ -274,8 +274,8 @@ class Creator extends Component {
               </Card.Body>
             </Card>
           </div>
-          <div class="d-flex justify-content-around mt-5 col-md-12">
-            <Card style={{ width: "17rem" }}>
+          <div class="d-flex justify-content-center mt-5">
+            <Card className="mr-4" style={{ width: "17rem" }}>
               <Card.Body>
                 <Card.Title>Interest Rate</Card.Title>
                 <Card.Text>{rate}</Card.Text>

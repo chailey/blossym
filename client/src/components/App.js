@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { BrowserRouter, Switch, Route } from "react-router-dom";
+import {Container} from "react-bootstrap";
 import Web3 from "web3";
 import Web3Modal from "web3modal";
 import Fortmatic from "fortmatic";
