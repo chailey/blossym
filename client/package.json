@@ -7,7 +7,6 @@
     "aave-js": "^1.2.1",
     "bootstrap": "^4.6.0",
     "bootswatch": "^4.6.0",
-    "ethers": "^5.0.29",
     "fortmatic": "^2.2.1",
     "react": "16.11.0",
     "react-bootstrap": "^1.4.3",
